@@ -88,36 +88,12 @@ public class StorageManager {
 	public static State saveOSSFileByInputStream(InputStream is, String path,
 			long maxSize) {
 		State state = null;
-
-		File tmpFile = getTmpFile();
-
-		byte[] dataBuf = new byte[ 2048 ];
-		BufferedInputStream bis = new BufferedInputStream(is, StorageManager.BUFFER_SIZE);
-
 		try {
-			BufferedOutputStream bos = new BufferedOutputStream(
-					new FileOutputStream(tmpFile), StorageManager.BUFFER_SIZE);
-
-			int count = 0;
-			while ((count = bis.read(dataBuf)) != -1) {
-				bos.write(dataBuf, 0, count);
-			}
-			bos.flush();
-			bos.close();
-
-			if (tmpFile.length() > maxSize) {
-				tmpFile.delete();
+			if(is.available()>maxSize){
 				return new BaseState(false, AppInfo.MAX_SIZE);
 			}
-
-			state = saveOSSFile(tmpFile, path);
-
-			if (!state.isSuccess()) {
-				tmpFile.delete();
-			}
-
+			state = saveOSSFile(is, path);
 			return state;
-			
 		} catch (IOException e) {
 		}
 		return new BaseState(false, AppInfo.IO_ERROR);
@@ -160,21 +136,20 @@ public class StorageManager {
 		return new File(tmpDir, tmpFileName);
 	}
 	
-	private static State saveOSSFile(File tmpFile, String path) {
+	private static State saveOSSFile(InputStream is, String path) throws IOException {
 		State state = null;
 		try {
 			if(path.startsWith("/")){
 				path = path.substring(1,path.length());
 			}
-			AliyunOSSUtil.upload(tmpFile, path);
-			tmpFile.delete();
-		} catch (FileNotFoundException e) {
+			AliyunOSSUtil.upload(is, path);
+		} catch (Exception e) {
 			return new BaseState(false, AppInfo.IO_ERROR);
 		}
 
 		state = new BaseState(true);
-		state.putInfo( "size", tmpFile.length() );
-		state.putInfo( "title", tmpFile.getName() );
+		state.putInfo( "size", is.available() );
+		state.putInfo( "title", path.substring(path.lastIndexOf("/")+1) );
 		
 		return state;
 	}
