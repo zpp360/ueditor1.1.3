@@ -98,6 +98,18 @@ public class StorageManager {
 		}
 		return new BaseState(false, AppInfo.IO_ERROR);
 	}
+	
+	public static State saveOSSFileByInputStream(InputStream is, String path){
+		State state=null;
+		try {
+			state = saveOSSFile(is, path);
+			is.close();
+			return state;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return new BaseState(false, AppInfo.IO_ERROR);
+	}
 
 	public static State saveFileByInputStream(InputStream is, String path) {
 		State state = null;
@@ -123,7 +135,7 @@ public class StorageManager {
 			if (!state.isSuccess()) {
 				tmpFile.delete();
 			}
-
+			is.close();
 			return state;
 		} catch (IOException e) {
 		}

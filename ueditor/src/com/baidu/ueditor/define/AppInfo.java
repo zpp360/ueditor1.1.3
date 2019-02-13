@@ -73,5 +73,4 @@ public final class AppInfo {
 	public static String getStateInfo ( int key ) {
 		return AppInfo.info.get( key );
 	}
-	
 }

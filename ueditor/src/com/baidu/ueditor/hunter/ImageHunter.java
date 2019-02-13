@@ -15,6 +15,8 @@ import com.baidu.ueditor.define.MIMEType;
 import com.baidu.ueditor.define.MultiState;
 import com.baidu.ueditor.define.State;
 import com.baidu.ueditor.upload.StorageManager;
+import com.baidu.ueditor.util.AliyunOSSUtil;
+import com.baidu.ueditor.util.UuidUtil;
 
 /**
  * 图片抓取器
@@ -89,14 +91,21 @@ public class ImageHunter {
 			String savePath = this.getPath( this.savePath, this.filename, suffix );
 			String physicalPath = this.rootPath + savePath;
 
-			State state = StorageManager.saveFileByInputStream( connection.getInputStream(), physicalPath );
-			
-			if ( state.isSuccess() ) {
-				state.putInfo( "url", PathFormat.format( savePath ) );
-				state.putInfo( "source", urlStr );
+			State storageState = null;
+			if(AliyunOSSUtil.ossOpen){
+				storageState = StorageManager.saveOSSFileByInputStream(connection.getInputStream(), savePath);
+				if (storageState.isSuccess()) {
+					storageState.putInfo("url", AliyunOSSUtil.imgHost + PathFormat.format(savePath));
+				}
+			}else{
+				storageState = StorageManager.saveFileByInputStream( connection.getInputStream(), physicalPath );
+				if ( storageState.isSuccess() ) {
+					storageState.putInfo( "url", PathFormat.format( savePath ) );
+				}
 			}
+			storageState.putInfo( "source", urlStr );
 			
-			return state;
+			return storageState;
 			
 		} catch ( Exception e ) {
 			return new BaseState( false, AppInfo.REMOTE_FAIL );

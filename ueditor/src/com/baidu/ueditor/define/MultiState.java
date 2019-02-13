@@ -22,39 +22,39 @@ public class MultiState implements State {
 	private Map<String, String> infoMap = new HashMap<String, String>();
 	private List<String> stateList = new ArrayList<String>();
 	
-	public MultiState ( boolean state ) {
+	public MultiState(boolean state){
 		this.state = state;
 	}
 	
-	public MultiState ( boolean state, String info ) {
+	public MultiState (boolean state, String info){
 		this.state = state;
 		this.info = info;
 	}
 	
-	public MultiState ( boolean state, int infoKey ) {
+	public MultiState (boolean state, int infoKey){
 		this.state = state;
-		this.info = AppInfo.getStateInfo( infoKey );
+		this.info = AppInfo.getStateInfo(infoKey);
 	}
 	
 	@Override
-	public boolean isSuccess() {
+	public boolean isSuccess(){
 		return this.state;
 	}
 	
-	public void addState ( State state ) {
-		stateList.add( state.toJSONString() );
+	public void addState(State state){
+		stateList.add(state.toJSONString());
 	}
 
 	/**
 	 * 该方法调用无效果
 	 */
 	@Override
-	public void putInfo(String name, String val) {
+	public void putInfo(String name, String val){
 		this.infoMap.put(name, val);
 	}
 
 	@Override
-	public String toJSONString() {
+	public String toJSONString(){
 		
 		String stateVal = this.isSuccess() ? AppInfo.getStateInfo( AppInfo.SUCCESS ) : this.info;
 		
@@ -105,13 +105,12 @@ public class MultiState implements State {
 	}
 
 	@Override
-	public void putInfo(String name, long val) {
-		this.intMap.put( name, val );
+	public void putInfo(String name, long val){
+		this.intMap.put(name, val);
 	}
 
 	@Override
 	public String getInfo(String name) {
 		return this.infoMap.get(name);
 	}
-
 }
