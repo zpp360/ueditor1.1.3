@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.core.io.ClassPathResource;
 
 import com.baidu.ueditor.define.ActionMap;
 
@@ -23,6 +25,7 @@ import com.baidu.ueditor.define.ActionMap;
 public final class ConfigManager {
 
 	private final String rootPath;
+	private final String filePath;
 	private final String originalPath;
 	private final String contextPath;
 	private static final String configFileName = "config.json";
@@ -36,11 +39,12 @@ public final class ConfigManager {
 	/*
 	 * 通过一个给定的路径构建一个配置管理器， 该管理器要求地址路径所在目录下必须存在config.properties文件
 	 */
-	private ConfigManager ( String rootPath, String contextPath, String uri ) throws FileNotFoundException, IOException {
+	private ConfigManager ( String rootPath, String contextPath, String uri ,String filePath) throws FileNotFoundException, IOException {
 		
 		rootPath = rootPath.replace( "\\", "/" );
 		
 		this.rootPath = rootPath;
+		this.filePath = filePath;
 		this.contextPath = contextPath;
 		
 		if ( contextPath.length() > 0 ) {
@@ -60,10 +64,10 @@ public final class ConfigManager {
 	 * @param uri 当前访问的uri
 	 * @return 配置管理器实例或者null
 	 */
-	public static ConfigManager getInstance ( String rootPath, String contextPath, String uri ) {
+	public static ConfigManager getInstance ( String rootPath, String contextPath, String uri,String filePath ) {
 		
 		try {
-			return new ConfigManager(rootPath, contextPath, uri);
+			return new ConfigManager(rootPath, contextPath, uri,filePath);
 		} catch ( Exception e ) {
 			return null;
 		}
@@ -148,6 +152,7 @@ public final class ConfigManager {
 		
 		conf.put( "savePath", savePath );
 		conf.put( "rootPath", this.rootPath );
+		conf.put("filePath", this.filePath);
 		
 		return conf;
 		
@@ -175,7 +180,7 @@ public final class ConfigManager {
 	}
 	
 	private String getConfigPath () {
-		return this.parentPath + File.separator + ConfigManager.configFileName;
+		return this.rootPath + File.separator + this.configFileName;
 	}
 
 	private String[] getArray ( String key ) {
@@ -196,8 +201,9 @@ public final class ConfigManager {
 		StringBuilder builder = new StringBuilder();
 		
 		try {
-			
-			InputStreamReader reader = new InputStreamReader( new FileInputStream( path ), "UTF-8" );
+			ClassPathResource resouce = new ClassPathResource(path);
+			InputStream inputStream = resouce.getInputStream();
+			InputStreamReader reader = new InputStreamReader(inputStream, "UTF-8" );
 			BufferedReader bfReader = new BufferedReader( reader );
 			
 			String tmpContent = null;

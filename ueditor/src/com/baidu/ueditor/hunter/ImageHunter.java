@@ -28,6 +28,7 @@ public class ImageHunter {
 	private String filename = null;
 	private String savePath = null;
 	private String rootPath = null;
+	private String filePath = null;
 	private List<String> allowTypes = null;
 	private long maxSize = -1;
 	
@@ -38,6 +39,7 @@ public class ImageHunter {
 		this.filename = (String)conf.get( "filename" );
 		this.savePath = (String)conf.get( "savePath" );
 		this.rootPath = (String)conf.get( "rootPath" );
+		this.filePath = (String)conf.get("filePath");
 		this.maxSize = (Long)conf.get( "maxSize" );
 		this.allowTypes = Arrays.asList( (String[])conf.get( "allowFiles" ) );
 		this.filters = Arrays.asList( (String[])conf.get( "filter" ) );
@@ -89,7 +91,7 @@ public class ImageHunter {
 			}
 			
 			String savePath = this.getPath( this.savePath, this.filename, suffix );
-			String physicalPath = this.rootPath + savePath;
+			String physicalPath = this.filePath + savePath;
 
 			State storageState = null;
 			if(AliyunOSSUtil.ossOpen){

@@ -66,6 +66,9 @@ public class BaseState implements State {
 		while ( iterator.hasNext() ) {
 			
 			key = iterator.next();
+			if(key=="path"){
+				continue;
+			}
 			
 			builder.append( ",\"" + key + "\": \"" + this.infoMap.get(key) + "\"" );
 			

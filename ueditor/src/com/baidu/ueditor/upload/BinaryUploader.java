@@ -23,42 +23,55 @@ import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 public class BinaryUploader {
 
 	public static final State save(HttpServletRequest request,
 			Map<String, Object> conf) {
-		FileItemStream fileStream = null;
-		boolean isAjaxUpload = request.getHeader( "X_Requested_With" ) != null;
+		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+//		FileItemStream fileStream = null;
+		boolean isAjaxUpload = multipartRequest.getHeader( "X_Requested_With" ) != null;
 
-		if (!ServletFileUpload.isMultipartContent(request)) {
+		if (!ServletFileUpload.isMultipartContent(multipartRequest)) {
 			return new BaseState(false, AppInfo.NOT_MULTIPART_CONTENT);
 		}
 
-		ServletFileUpload upload = new ServletFileUpload(
-				new DiskFileItemFactory());
+//		ServletFileUpload upload = new ServletFileUpload(
+//				new DiskFileItemFactory());
 
-        if ( isAjaxUpload ) {
-            upload.setHeaderEncoding( "UTF-8" );
-        }
+//        if ( isAjaxUpload ) {
+//            upload.setHeaderEncoding( "UTF-8" );
+//        }
 
 		try {
-			FileItemIterator iterator = upload.getItemIterator(request);
-
-			while (iterator.hasNext()) {
-				fileStream = iterator.next();
-				
-				if (!fileStream.isFormField())
-					break;
-				fileStream = null;
+//			FileItemIterator iterator = upload.getItemIterator(request);
+			InputStream inputStream = null;
+			MultipartFile mf = null;
+			Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+			for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+				mf = entity.getValue();
+				inputStream = mf.getInputStream();
 			}
+//			while (iterator.hasNext()) {
+//				fileStream = iterator.next();
+//				
+//				if (!fileStream.isFormField())
+//					break;
+//				fileStream = null;
+//			}
 
-			if (fileStream == null) {
+//			if (fileStream == null) {
+//				return new BaseState(false, AppInfo.NOTFOUND_UPLOAD_DATA);
+//			}
+			if (inputStream == null) {
 				return new BaseState(false, AppInfo.NOTFOUND_UPLOAD_DATA);
 			}
 
 			String savePath = (String) conf.get("savePath");
-			String originFileName = fileStream.getName();
+//			String originFileName = fileStream.getName();
+			String originFileName = mf.getOriginalFilename();
 			String suffix = FileType.getSuffixByFilename(originFileName);
 
 			originFileName = originFileName.substring(0,
@@ -76,22 +89,23 @@ public class BinaryUploader {
 			State storageState = null;
 			
 			if(AliyunOSSUtil.ossOpen){
-				InputStream is = fileStream.openStream();
-				storageState = StorageManager.saveOSSFileByInputStream(is,
+//				InputStream is = fileStream.openStream();
+				storageState = StorageManager.saveOSSFileByInputStream(inputStream,
 						savePath, maxSize);
-				is.close();
+				inputStream.close();
 				if (storageState.isSuccess()) {
 					storageState.putInfo("url", AliyunOSSUtil.imgHost + PathFormat.format(savePath));
 					storageState.putInfo("type", suffix);
 					storageState.putInfo("original", originFileName + suffix);
 				}
 			}else{
-				String physicalPath = (String) conf.get("rootPath") + savePath;
+//				String physicalPath = (String) conf.get("rootPath") + savePath;
 				
-				InputStream is = fileStream.openStream();
-				storageState = StorageManager.saveFileByInputStream(is,
+//				InputStream is = fileStream.openStream();
+				String physicalPath = (String)conf.get("filePath") + savePath;
+				storageState = StorageManager.saveFileByInputStream(inputStream,
 						physicalPath, maxSize);
-				is.close();
+				inputStream.close();
 				//图片压缩
 				String path = storageState.getInfo("path");
 				if(conf.get("upload_type")!=null && ActionMap.UPLOAD_IMAGE == (int)conf.get("upload_type")){
@@ -109,11 +123,9 @@ public class BinaryUploader {
 				}
 			} 
 			return storageState;
-		} catch (FileUploadException e) {
-			return new BaseState(false, AppInfo.PARSE_REQUEST_ERROR);
 		} catch (IOException e) {
+			return new BaseState(false, AppInfo.IO_ERROR);
 		}
-		return new BaseState(false, AppInfo.IO_ERROR);
 	}
 
 	private static boolean validType(String type, String[] allowTypes) {
